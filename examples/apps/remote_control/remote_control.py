@@ -29,6 +29,8 @@ from lib import flask_helpers
 import anki_vector
 from anki_vector import util
 from anki_vector import annotate
+from anki_vector import screen
+
 
 try:
     from flask import Flask, request
@@ -131,59 +133,67 @@ class RemoteControlVector:
         self.is_mouse_look_enabled = _is_mouse_look_enabled_by_default
         self.mouse_dir = 0
 
-        all_anim_names = self.vector.anim.anim_list
-        all_anim_names.sort()
-        self.anim_names = []
+        # all_anim_names = self.vector.anim.anim_list
+        # all_anim_names.sort()
+        # self.anim_names = []
 
         # Hide a few specific test animations that don't behave well
-        bad_anim_names = [
-            "ANIMATION_TEST",
-            "soundTestAnim"]
+        # bad_anim_names = [
+        #     "ANIMATION_TEST",
+        #     "soundTestAnim"]
+        #
+        # for anim_name in all_anim_names:
+        #     if anim_name not in bad_anim_names:
+        #         self.anim_names.append(anim_name)
+        #
+        # default_anims_for_keys = ["anim_turn_left_01",  # 0
+        #                           "anim_blackjack_victorwin_01",  # 1
+        #                           "anim_pounce_success_02",  # 2
+        #                           "anim_feedback_shutup_01",  # 3
+        #                           "anim_knowledgegraph_success_01",  # 4
+        #                           "anim_wakeword_groggyeyes_listenloop_01",  # 5
+        #                           "anim_fistbump_success_01",  # 6
+        #                           "anim_reacttoface_unidentified_01",  # 7
+        #                           "anim_rtpickup_loop_10",  # 8
+        #                           "anim_volume_stage_05"]  # 9
 
-        for anim_name in all_anim_names:
-            if anim_name not in bad_anim_names:
-                self.anim_names.append(anim_name)
-
-        default_anims_for_keys = ["anim_turn_left_01",  # 0
-                                  "anim_blackjack_victorwin_01",  # 1
-                                  "anim_pounce_success_02",  # 2
-                                  "anim_feedback_shutup_01",  # 3
-                                  "anim_knowledgegraph_success_01",  # 4
-                                  "anim_wakeword_groggyeyes_listenloop_01",  # 5
-                                  "anim_fistbump_success_01",  # 6
-                                  "anim_reacttoface_unidentified_01",  # 7
-                                  "anim_rtpickup_loop_10",  # 8
-                                  "anim_volume_stage_05"]  # 9
-
-        self.anim_index_for_key = [0] * 10
-        kI = 0
-        for default_key in default_anims_for_keys:
-            try:
-                anim_idx = self.anim_names.index(default_key)
-            except ValueError:
-                print("Error: default_anim %s is not in the list of animations" % default_key)
-                anim_idx = kI
-            self.anim_index_for_key[kI] = anim_idx
-            kI += 1
-
-        all_anim_trigger_names = self.vector.anim.anim_trigger_list
-        self.anim_trigger_names = []
-
-        bad_anim_trigger_names = [
-            "InvalidAnimTrigger",
-            "UnitTestAnim"]
-
-        for anim_trigger_name in all_anim_trigger_names:
-            if anim_trigger_name not in bad_anim_trigger_names:
-                self.anim_trigger_names.append(anim_trigger_name)
-
-        self.selected_anim_trigger_name = self.anim_trigger_names[0]
+        # self.anim_index_for_key = [0] * 10
+        # kI = 0
+        # for default_key in default_anims_for_keys:
+        #     try:
+        #         anim_idx = self.anim_names.index(default_key)
+        #     except ValueError:
+        #         print("Error: default_anim %s is not in the list of animations" % default_key)
+        #         anim_idx = kI
+        #     self.anim_index_for_key[kI] = anim_idx
+        #     kI += 1
+        #
+        # all_anim_trigger_names = self.vector.anim.anim_trigger_list
+        # self.anim_trigger_names = []
+        #
+        # bad_anim_trigger_names = [
+        #     "InvalidAnimTrigger",
+        #     "UnitTestAnim"]
+        #
+        # for anim_trigger_name in all_anim_trigger_names:
+        #     if anim_trigger_name not in bad_anim_trigger_names:
+        #         self.anim_trigger_names.append(anim_trigger_name)
+        #
+        # self.selected_anim_trigger_name = self.anim_trigger_names[0]
 
         self.action_queue = []
         self.text_to_say = "Hi I'm Vector"
+        # current_directory = os.path.dirname(os.path.realpath(__file__))
+        # image_path = os.path.join(current_directory, "..", "face_images", "cozmo_image.jpg")
+        image_path = "/home/andy/anki_vector_sdk_examples_0.6.0/face_images/andy2.jpg"
+        image_file = Image.open(image_path)
+        screen_data = screen.convert_image_to_screen_data(image_file)
+        self.vector.screen.set_screen_with_image_data(screen_data, 40)
 
-    def set_anim(self, key_index, anim_index):
-        self.anim_index_for_key[key_index] = anim_index
+        # print(self.vector.get_battery_state().battery_level)
+
+    # def set_anim(self, key_index, anim_index):
+    #     self.anim_index_for_key[key_index] = anim_index
 
     def handle_mouse(self, mouse_x, mouse_y):
         """Called whenever mouse moves
@@ -282,25 +292,25 @@ class RemoteControlVector:
 
         # Handle any keys being released (e.g. the end of a key-click)
         if not is_key_down:
-            if ord('9') >= key_code >= ord('0'):
-                anim_name = self.key_code_to_anim_name(key_code)
-                self.queue_action((self.vector.anim.play_animation, anim_name))
-            elif key_code == ord(' '):
+            # if ord('9') >= key_code >= ord('0'):
+            #     anim_name = self.key_code_to_anim_name(key_code)
+            #     self.queue_action((self.vector.anim.play_animation, anim_name))
+            if key_code == ord(' '):
                 self.queue_action((self.vector.behavior.say_text, self.text_to_say))
-            elif key_code == ord('X'):
-                self.queue_action((self.vector.anim.play_animation_trigger, self.selected_anim_trigger_name))
+            # elif key_code == ord('X'):
+            #     self.queue_action((self.vector.anim.play_animation_trigger, self.selected_anim_trigger_name))
 
-    def key_code_to_anim_name(self, key_code):
-        key_num = key_code - ord('0')
-        anim_num = self.anim_index_for_key[key_num]
-        anim_name = self.anim_names[anim_num]
-        return anim_name
+    # def key_code_to_anim_name(self, key_code):
+    #     key_num = key_code - ord('0')
+    #     anim_num = self.anim_index_for_key[key_num]
+    #     anim_name = self.anim_names[anim_num]
+    #     return anim_name
 
     def func_to_name(self, func):
         if func == self.vector.behavior.say_text:
             return "say_text"
-        if func == self.vector.anim.play_animation:
-            return "play_anim"
+        # if func == self.vector.anim.play_animation:
+        #     return "play_anim"
         return "UNKNOWN"
 
     def action_to_text(self, action):
@@ -373,33 +383,33 @@ class RemoteControlVector:
         self.vector.motors.set_wheel_motors(*wheel_params)
 
 
-def get_anim_sel_drop_down(selectorIndex):
-    html_text = """<select onchange="handleDropDownSelect(this)" name="animSelector""" + str(selectorIndex) + """">"""
-    i = 0
-    for anim_name in flask_app.remote_control_vector.anim_names:
-        is_selected_item = (i == flask_app.remote_control_vector.anim_index_for_key[selectorIndex])
-        selected_text = ''' selected="selected"''' if is_selected_item else ""
-        html_text += """<option value=""" + str(i) + selected_text + """>""" + anim_name + """</option>"""
-        i += 1
-    html_text += """</select>"""
-    return html_text
+# def get_anim_sel_drop_down(selectorIndex):
+#     html_text = """<select onchange="handleDropDownSelect(this)" name="animSelector""" + str(selectorIndex) + """">"""
+#     i = 0
+#     for anim_name in flask_app.remote_control_vector.anim_names:
+#         is_selected_item = (i == flask_app.remote_control_vector.anim_index_for_key[selectorIndex])
+#         selected_text = ''' selected="selected"''' if is_selected_item else ""
+#         html_text += """<option value=""" + str(i) + selected_text + """>""" + anim_name + """</option>"""
+#         i += 1
+#     html_text += """</select>"""
+#     return html_text
 
 
-def get_anim_sel_drop_downs():
-    html_text = ""
-    for i in range(10):
-        # list keys 1..9,0 as that's the layout on the keyboard
-        key = i + 1 if (i < 9) else 0
-        html_text += str(key) + """: """ + get_anim_sel_drop_down(key) + """<br>"""
-    return html_text
+# def get_anim_sel_drop_downs():
+#     html_text = ""
+#     for i in range(10):
+#         # list keys 1..9,0 as that's the layout on the keyboard
+#         key = i + 1 if (i < 9) else 0
+#         html_text += str(key) + """: """ + get_anim_sel_drop_down(key) + """<br>"""
+#     return html_text
 
-def get_anim_trigger_sel_drop_down():
-    html_text = "x: " # Add keyboard selector
-    html_text += """<select onchange="handleAnimTriggerDropDownSelect(this)" name="animTriggerSelector">"""
-    for anim_trigger_name in flask_app.remote_control_vector.anim_trigger_names:
-        html_text += """<option value=""" + anim_trigger_name + """>""" + anim_trigger_name + """</option>"""
-    html_text += """</select>"""
-    return html_text
+# def get_anim_trigger_sel_drop_down():
+#     html_text = "x: " # Add keyboard selector
+#     html_text += """<select onchange="handleAnimTriggerDropDownSelect(this)" name="animTriggerSelector">"""
+#     for anim_trigger_name in flask_app.remote_control_vector.anim_trigger_names:
+#         html_text += """<option value=""" + anim_trigger_name + """>""" + anim_trigger_name + """</option>"""
+#     html_text += """</select>"""
+#     return html_text
 
 def to_js_bool_string(bool_value):
     return "true" if bool_value else "false"
@@ -428,10 +438,6 @@ def handle_index_page():
                         <h3>Driving:</h3>
 
                         <b>W A S D</b> : Drive Forwards / Left / Back / Right<br><br>
-                        <b>Q</b> : Toggle Mouse Look: <button id="mouseLookId" onClick=onMouseLookButtonClicked(this) style="font-size: 14px">Default</button><br>
-                        <b>Mouse</b> : Move in browser window to aim<br>
-                        (steer and head angle)<br>
-                        (similar to an FPS game)<br>
 
                         <h3>Head:</h3>
                         <b>T</b> : Move Head Up<br>
@@ -443,20 +449,11 @@ def handle_index_page():
                         <h3>General:</h3>
                         <b>Shift</b> : Hold to Move Faster (Driving, Head and Lift)<br>
                         <b>Alt</b> : Hold to Move Slower (Driving, Head and Lift)<br>
-                        <b>P</b> : Toggle Free Play mode: <button id="freeplayId" onClick=onFreeplayButtonClicked(this) style="font-size: 14px">Default</button><br>
-                        <b>O</b> : Toggle Debug Annotations: <button id="debugAnnotationsId" onClick=onDebugAnnotationsButtonClicked(this) style="font-size: 14px">Default</button><br>
-                        <h3>Play Animations</h3>
-                        <b>0 .. 9</b> : Play Animation mapped to that key<br>
+                      
                         <h3>Talk</h3>
                         <b>Space</b> : Say <input type="text" name="sayText" id="sayTextId" value=\"""" + flask_app.remote_control_vector.text_to_say + """\" onchange=handleTextInput(this)>
                     </td>
-                    <td width=30></td>
-                    <td valign=top>
-                    <h2>Animation key mappings:</h2>
-                    """ + get_anim_sel_drop_downs() + """<br>
-                    <h2>Animation Triggers:</h2>
-                    """ + get_anim_trigger_sel_drop_down() + """<br><br>
-                    </td>
+                    
                 </tr>
             </table>
 
@@ -504,74 +501,12 @@ def handle_index_page():
                 }
                 setInterval(updateVector , 60);
 
-                function updateButtonEnabledText(button, isEnabled)
-                {
-                    button.firstChild.data = isEnabled ? "Enabled" : "Disabled";
-                }
+              
 
-                function onMouseLookButtonClicked(button)
-                {
-                    gIsMouseLookEnabled = !gIsMouseLookEnabled;
-                    updateButtonEnabledText(button, gIsMouseLookEnabled);
-                    isMouseLookEnabled = gIsMouseLookEnabled
-                    postHttpRequest("setMouseLookEnabled", {isMouseLookEnabled})
-                }
+             
+               
 
-                function updateDebugAnnotationButtonEnabledText(button, isEnabled)
-                {
-                    switch(gAreDebugAnnotationsEnabled)
-                    {
-                    case 0:
-                        button.firstChild.data = "Disabled";
-                        break;
-                    case 1:
-                        button.firstChild.data = "Enabled (vision)";
-                        break;
-                    case 2:
-                        button.firstChild.data = "Enabled (all)";
-                        break;
-                    default:
-                        button.firstChild.data = "ERROR";
-                        break;
-                    }
-                }
-
-                function onDebugAnnotationsButtonClicked(button)
-                {
-                    gAreDebugAnnotationsEnabled += 1;
-                    if (gAreDebugAnnotationsEnabled > 2)
-                    {
-                        gAreDebugAnnotationsEnabled = 0
-                    }
-                    updateDebugAnnotationButtonEnabledText(button, gAreDebugAnnotationsEnabled)
-                    areDebugAnnotationsEnabled = gAreDebugAnnotationsEnabled
-                    postHttpRequest("setAreDebugAnnotationsEnabled", {areDebugAnnotationsEnabled})
-                }
-
-                function onFreeplayButtonClicked(button)
-                {
-                    gIsFreeplayEnabled = !gIsFreeplayEnabled;
-                    updateButtonEnabledText(button, gIsFreeplayEnabled);
-                    isFreeplayEnabled = gIsFreeplayEnabled
-                    postHttpRequest("setFreeplayEnabled", {isFreeplayEnabled})
-                }
-
-                updateButtonEnabledText(document.getElementById("mouseLookId"), gIsMouseLookEnabled);
-                updateButtonEnabledText(document.getElementById("freeplayId"), gIsFreeplayEnabled);
-                updateDebugAnnotationButtonEnabledText(document.getElementById("debugAnnotationsId"), gAreDebugAnnotationsEnabled);
-
-                function handleDropDownSelect(selectObject)
-                {
-                    selectedIndex = selectObject.selectedIndex
-                    itemName = selectObject.name
-                    postHttpRequest("dropDownSelect", {selectedIndex, itemName});
-                }
-
-                function handleAnimTriggerDropDownSelect(selectObject)
-                {
-                    animTriggerName = selectObject.value
-                    postHttpRequest("animTriggerDropDownSelect", {animTriggerName});
-                }
+                
 
                 function handleKeyActivity (e, actionType)
                 {
@@ -653,13 +588,15 @@ def handle_index_page():
 
 def get_annotated_image():
     image = flask_app.remote_control_vector.vector.camera.latest_image
-    if flask_app.display_debug_annotations != DebugAnnotations.DISABLED.value:
-        return image.annotate_image()
+    # if flask_app.display_debug_annotations != DebugAnnotations.DISABLED.value:
+    #     return image.annotate_image()
     return image.raw_image
 
 
 def streaming_video():
     """Video streaming generator function"""
+    # don't stream for now
+    return
     while True:
         if flask_app.remote_control_vector:
             image = get_annotated_image()
@@ -759,27 +696,27 @@ def handle_keyup():
     return handle_key_event(request, is_key_down=False)
 
 
-@flask_app.route('/dropDownSelect', methods=['POST'])
-def handle_dropDownSelect():
-    """Called from Javascript whenever an animSelector dropdown menu is selected (i.e. modified)"""
-    message = json.loads(request.data.decode("utf-8"))
+# @flask_app.route('/dropDownSelect', methods=['POST'])
+# def handle_dropDownSelect():
+#     """Called from Javascript whenever an animSelector dropdown menu is selected (i.e. modified)"""
+#     message = json.loads(request.data.decode("utf-8"))
+#
+#     item_name_prefix = "animSelector"
+#     item_name = message['itemName']
+#
+#     if flask_app.remote_control_vector and item_name.startswith(item_name_prefix):
+#         item_name_index = int(item_name[len(item_name_prefix):])
+#         flask_app.remote_control_vector.set_anim(item_name_index, message['selectedIndex'])
+#
+#     return ""
 
-    item_name_prefix = "animSelector"
-    item_name = message['itemName']
-
-    if flask_app.remote_control_vector and item_name.startswith(item_name_prefix):
-        item_name_index = int(item_name[len(item_name_prefix):])
-        flask_app.remote_control_vector.set_anim(item_name_index, message['selectedIndex'])
-
-    return ""
-
-@flask_app.route('/animTriggerDropDownSelect', methods=['POST'])
-def handle_animTriggerDropDownSelect():
-    """Called from Javascript whenever the animTriggerSelector dropdown menu is selected (i.e. modified)"""
-    message = json.loads(request.data.decode("utf-8"))
-    selected_anim_trigger_name = message['animTriggerName']
-    flask_app.remote_control_vector.selected_anim_trigger_name = selected_anim_trigger_name
-    return ""
+# @flask_app.route('/animTriggerDropDownSelect', methods=['POST'])
+# def handle_animTriggerDropDownSelect():
+#     """Called from Javascript whenever the animTriggerSelector dropdown menu is selected (i.e. modified)"""
+#     message = json.loads(request.data.decode("utf-8"))
+#     selected_anim_trigger_name = message['animTriggerName']
+#     flask_app.remote_control_vector.selected_anim_trigger_name = selected_anim_trigger_name
+#     return ""
 
 @flask_app.route('/sayText', methods=['POST'])
 def handle_sayText():
@@ -806,13 +743,13 @@ def handle_updateVector():
 def run():
     args = util.parse_command_args()
 
-    with anki_vector.AsyncRobot(args.serial, enable_face_detection=True, enable_custom_object_detection=True) as robot:
+    with anki_vector.AsyncRobot(args.serial, show_viewer=True) as robot:
         flask_app.remote_control_vector = RemoteControlVector(robot)
-        flask_app.display_debug_annotations = DebugAnnotations.ENABLED_ALL.value
-
+        # flask_app.display_debug_annotations = DebugAnnotations.ENABLED_ALL.value
+        flask_app.display_debug_annotations = DebugAnnotations.DISABLED.value
         robot.camera.init_camera_feed()
         robot.behavior.drive_off_charger()
-        robot.camera.image_annotator.add_annotator('robotState', RobotStateDisplay)
+        # robot.camera.image_annotator.add_annotator('robotState', RobotStateDisplay)
 
         flask_helpers.run_flask(flask_app)
 
